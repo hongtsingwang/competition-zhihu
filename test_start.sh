@@ -1,4 +1,4 @@
 #!/bin/bash
 
 spark-submit \
-   spark-test.py
+   first_script.py 
