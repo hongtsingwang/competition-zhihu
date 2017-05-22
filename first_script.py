@@ -79,12 +79,9 @@ question_word_map = question_word_train.map(get_question_word_map)
 
 word_topic = question_word_map.join(question_topic_map, numPartitions=10)
 # 获取Word 和 topic的共现关系
-word_topic_count = word_topic.flatMap(get_word_topic_count).map(lambda x: (x, 1)).reduceByKey(add).filter(
-    lambda x: x[1] != 1)
-word_top_topic = word_topic_count.map(lambda x: (x[0][0], (x[0][1], x[1]))).groupByKey().mapValues(list).collectAsMap()
-
-
-# word_topic_count_output = word_topic_count.map(lambda x: "\t".join([x[0][0], x[0][1], str(x[1])]))
+word_topic_count = word_topic.flatMap(get_word_topic_count).map(lambda x: (x,1)).reduceByKey(add)
+word_top_topic = word_topic_count.map(lambda x:(x[0][0],(x[0][1],x[1]))).groupByKey().mapValues(list).collectAsMap()
+word_topic_count_output = word_topic_count.map(lambda x: "\t".join([x[0][0], x[0][1], str(x[1])]))
 
 
 # 计算每个词的IDF情况
@@ -100,9 +97,7 @@ word_count = word_count.reduceByKey(add).collectAsMap()
 word_count_path = os.path.join(transform_dir, "word_count.txt")
 
 word_topic_count_path = os.path.join(transform_dir, "word_topic_count.txt")
-
-
-# word_topic_count_output.saveAsTextFile(word_topic_count_path)
+word_topic_count_output.saveAsTextFile(word_topic_count_path)
 
 def get_result(row):
     row_list = row.strip().split("\t")
@@ -112,13 +107,13 @@ def get_result(row):
     for word in word_list:
         word_frequency = word_count.get(word, 0)
         tmp_dict[word] = word_frequency
-    tmp_list = sorted(tmp_dict.items(), key=lambda x: x[1])[:5]
+    tmp_list = sorted(tmp_dict.items(), key=lambda x:x[1])[:10]
     result_list = []
     for item in tmp_list:
         word_name = item[0]
         topic_list = word_top_topic.get(word_name, [])
-        sorted_topic_list = sorted(topic_list, key=lambda x: x[1], reverse=True)
-        for item in sorted_topic_list[:3]:
+        sorted_topic_list = sorted(topic_list, key=lambda x:x[1], reverse=True)
+        for item in sorted_topic_list[:2]:
             if item not in result_list:
                 result_list.append(item[0])
     return question_id + "," + ",".join(result_list[:5])
