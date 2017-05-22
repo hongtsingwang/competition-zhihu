@@ -37,7 +37,7 @@ question_word_train_file = os.path.join(original_data_dir, "question_train_set.t
 question_word_train = sc.textFile(question_word_train_file, minPartitions=10)
 
 question_word_eval_file = os.path.join(original_data_dir, "question_eval_set.txt")
-question_word_eval = sc.textFile(question_word_eval_file, minPartitions=10)
+question_word_eval = sc.textFile(question_word_eval_file, minPartitions=20)
 
 
 def get_question_topic_map(row):
@@ -79,7 +79,7 @@ question_word_map = question_word_train.map(get_question_word_map)
 
 word_topic = question_word_map.join(question_topic_map, numPartitions=10)
 # 获取Word 和 topic的共现关系
-word_topic_count = word_topic.flatMap(get_word_topic_count).map(lambda x: (x,1)).reduceByKey(add)
+word_topic_count = word_topic.flatMap(get_word_topic_count).map(lambda x: (x,1)).reduceByKey(add).filter(lambda x:x[1] != 1)
 word_top_topic = word_topic_count.map(lambda x:(x[0][0],(x[0][1],x[1]))).groupByKey().mapValues(list).collectAsMap()
 word_topic_count_output = word_topic_count.map(lambda x: "\t".join([x[0][0], x[0][1], str(x[1])]))
 
@@ -96,8 +96,8 @@ word_count = word_count.reduceByKey(add).collectAsMap()
 # word_count = sc.broadcast(word_count)
 word_count_path = os.path.join(transform_dir, "word_count.txt")
 
-word_topic_count_path = os.path.join(transform_dir, "word_topic_count.txt")
-word_topic_count_output.saveAsTextFile(word_topic_count_path)
+# word_topic_count_path = os.path.join(transform_dir, "word_topic_count.txt")
+# word_topic_count_output.saveAsTextFile(word_topic_count_path)
 
 def get_result(row):
     row_list = row.strip().split("\t")
@@ -113,7 +113,7 @@ def get_result(row):
         word_name = item[0]
         topic_list = word_top_topic.get(word_name, [])
         sorted_topic_list = sorted(topic_list, key=lambda x:x[1], reverse=True)
-        for item in sorted_topic_list[:2]:
+        for item in sorted_topic_list[:3]:
             if item not in result_list:
                 result_list.append(item[0])
     return question_id + "," + ",".join(result_list[:5])
