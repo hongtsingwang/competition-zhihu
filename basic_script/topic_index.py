@@ -17,7 +17,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 parser = argparse.ArgumentParser()
-parser.add_argument("topic_file",default="data/topic_info.txt", help="topic基本信息文件")
+parser.add_argument("--topic_file",default="data/topic_info.txt", help="topic基本信息文件")
 args = parser.parse_args()
 
 # output = args.output
@@ -36,7 +36,7 @@ assert os.path.isfile(args.topic_file)
 
 result = dict()
 for index, line in enumerate(open(args.topic_file)):
-    line_list = line.strip().split("\t")
+    line_list = line.strip("\n").split("\t")
     if len(line_list) == 6:
         topic_id = line_list[0]
         parent_id = line_list[1]
@@ -53,9 +53,5 @@ for index, line in enumerate(open(args.topic_file)):
 f = open("topic.pkl", "w")
 pickler = pickle.Pickler(f)
 pickler.dump(result)
-# f.close()
+f.close()
 
-# 测试是否dump成功
-unpickler = pickle.Unpickler(f)
-c = unpickler.load()
-print c
